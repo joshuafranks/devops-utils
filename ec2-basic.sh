@@ -2,22 +2,22 @@
 set -e 
 
 function main() {
-	read -rp "Provide a username for the new sudo user:" username
-	promptForPassword
+    read -rp "Provide a username for the new sudo user:" username
+    promptForPassword
 
-	# create user
-	echo "Creating user..."
-	sudo useradd -m -G sudo "${username}"
+    # create user
+    echo "Creating user..."
+    sudo useradd -m -G sudo "${username}"
     echo "${username}:${password}" | sudo chpasswd
     echo "User created!"
 
-	# add SSH key
-	read -rp "Paste in the public SSH key for the new user:\n" sshKey
+    # add SSH key
+    read -rp "Paste in the public SSH key for the new user:\n" sshKey
 
-	echo "Adding SSH key..."
-	execAsUser "${username}" "cd /home/josh; mkdir .ssh; touch .ssh/authorized_keys;"
+    echo "Adding SSH key..."
+    execAsUser "${username}" "cd /home/josh; mkdir .ssh; touch .ssh/authorized_keys;"
     echo "${sshKey}" | sudo tee -a /home/"${username}"/.ssh/authorized_keys
-    sudo chmod 600 /home/"${username}"/.ssh/authorized_keys 
+    sudo chmod 600 /home/"${username}"/.ssh/authorized_keys
     echo "SSH key added!"
 
     ### secure SSH
@@ -27,59 +27,59 @@ function main() {
     sudo systemctl restart ssh
     echo "SSH secured!"
 
-	### fail2ban
-	echo "Installing fail2ban..."
-	sudo apt-get update && sudo apt-get install -y fail2ban 
-	echo "fail2ban installed!"
+    ### fail2ban
+    echo "Installing fail2ban..."
+    sudo apt-get update && sudo apt-get install -y fail2ban
+    echo "fail2ban installed!"
 
-	### firewall
-	echo "Configuring firewall..."
-	sudo iptables -A INPUT -i lo -j ACCEPT
-	sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
-	sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
-	sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
-	sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
-	sudo iptables -A INPUT -j DROP
-	sudo apt-get update && sudo apt-get install -y iptables-persistent
-	sudo iptables-save | sudo tee /etc/iptables/rules.v4	
-	sudo service iptables restart
-	echo "Firewall configured!"
+    ### firewall
+    echo "Configuring firewall..."
+    sudo iptables -A INPUT -i lo -j ACCEPT
+    sudo iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+    sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+    sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+    sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+    sudo iptables -A INPUT -j DROP
+    sudo apt-get update && sudo apt-get install -y iptables-persistent
+    sudo iptables-save | sudo tee /etc/iptables/rules.v4
+    sudo service iptables restart
+    echo "Firewall configured!"
 
-	### install nginx & php-fpm
-	echo "Installing Nginx & php-fpm..."
-	sudo apt-get update && sudo apt-get install -y nginx
-	sudo apt-get update && sudo apt-get install -y php-fpm
-	sudo apt-get install -y php-json php-xml
-	echo "Nginx & php-fpm installed!"
+    ### install nginx & php-fpm
+    echo "Installing Nginx & php-fpm..."
+    sudo apt-get update && sudo apt-get install -y nginx
+    sudo apt-get update && sudo apt-get install -y php-fpm
+    sudo apt-get install -y php-json php-xml
+    echo "Nginx & php-fpm installed!"
 
-	### install mysql
-	echo "Installing MySQL..."
-	sudo apt-get update && sudo apt-get install -y mysql-server
-	sudo mysql_secure_installation
-	sudo apt-get update && sudo apt-get install -y php-mysql
-	sudo mysql -e "UPDATE mysql.user SET plugin = 'mysql_native_password' WHERE User = 'root'; FLUSH PRIVILEGES;";
-	echo "Installed MySQL!"
+    ### install mysql
+    echo "Installing MySQL..."
+    sudo apt-get update && sudo apt-get install -y mysql-server
+    sudo mysql_secure_installation
+    sudo apt-get update && sudo apt-get install -y php-mysql
+    sudo mysql -e "UPDATE mysql.user SET plugin = 'mysql_native_password' WHERE User = 'root'; FLUSH PRIVILEGES;";
+    echo "Installed MySQL!"
 
-	echo ""
-	echo ""
-	echo ""
-	echo "Initial configuration complete."
+    echo ""
+    echo ""
+    echo ""
+    echo "Initial configuration complete."
 }
 
 function promptForPassword() {
-   PASSWORDS_MATCH=0
-   while [ "${PASSWORDS_MATCH}" -eq "0" ]; do
-       read -s -rp "Enter new UNIX password:" password
-       printf "\n"
-       read -s -rp "Retype new UNIX password:" password_confirmation
-       printf "\n"
+    PASSWORDS_MATCH=0
+    while [ "${PASSWORDS_MATCH}" -eq "0" ]; do
+        read -s -rp "Enter new UNIX password:" password
+        printf "\n"
+        read -s -rp "Retype new UNIX password:" password_confirmation
+        printf "\n"
 
-       if [[ "${password}" != "${password_confirmation}" ]]; then
-           echo "Passwords do not match! Please try again."
-       else
-           PASSWORDS_MATCH=1
-       fi
-   done 
+    if [[ "${password}" != "${password_confirmation}" ]]; then
+        echo "Passwords do not match! Please try again."
+    else
+        PASSWORDS_MATCH=1
+    fi
+    done
 }
 
 function execAsUser() {
