@@ -2,7 +2,7 @@
 set -e 
 
 function main() {
-    read -rp "Provide a username for the new sudo user:" username
+    read -rp $'Provide a username for the new sudo user:\n>' username
     promptForPassword
 
     # create user
@@ -12,10 +12,10 @@ function main() {
     echo "User created!"
 
     # add SSH key
-    read -rp "Paste in the public SSH key for the new user:\n" sshKey
+    read -rp $'Paste in the public SSH key for the new user:\n>' sshKey
 
     echo "Adding SSH key..."
-    execAsUser "${username}" "cd /home/josh; mkdir .ssh; touch .ssh/authorized_keys;"
+    execAsUser "${username}" "cd /home/${username}; mkdir .ssh; touch .ssh/authorized_keys;"
     echo "${sshKey}" | sudo tee -a /home/"${username}"/.ssh/authorized_keys
     sudo chmod 600 /home/"${username}"/.ssh/authorized_keys
     echo "SSH key added!"
@@ -60,26 +60,23 @@ function main() {
     sudo mysql -e "UPDATE mysql.user SET plugin = 'mysql_native_password' WHERE User = 'root'; FLUSH PRIVILEGES;";
     echo "Installed MySQL!"
 
-    echo ""
-    echo ""
-    echo ""
-    echo "Initial configuration complete."
+    echo $'\n\n\nInitial configuration complete.'
 }
 
 function promptForPassword() {
-    PASSWORDS_MATCH=0
-    while [ "${PASSWORDS_MATCH}" -eq "0" ]; do
-        read -s -rp "Enter new UNIX password:" password
-        printf "\n"
-        read -s -rp "Retype new UNIX password:" password_confirmation
-        printf "\n"
+  PASSWORDS_MATCH=0
+  while [ "${PASSWORDS_MATCH}" -eq "0" ]; do
+      read -s -rp "Enter new UNIX password:" password
+      printf "\n"
+      read -s -rp "Retype new UNIX password:" password_confirmation
+      printf "\n"
 
-    if [[ "${password}" != "${password_confirmation}" ]]; then
-        echo "Passwords do not match! Please try again."
-    else
-        PASSWORDS_MATCH=1
-    fi
-    done
+  if [[ "${password}" != "${password_confirmation}" ]]; then
+      echo "Passwords do not match! Please try again."
+  else
+      PASSWORDS_MATCH=1
+  fi
+  done
 }
 
 function execAsUser() {
