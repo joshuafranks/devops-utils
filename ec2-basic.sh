@@ -1,4 +1,5 @@
 #!/bin/bash
+
 set -e 
 
 function main() {
@@ -45,12 +46,15 @@ function main() {
     sudo service iptables restart
     echo "Firewall configured!"
 
-    ### install nginx & php-fpm
-    echo "Installing Nginx & php-fpm..."
+    ### install nginx & PHP dependencies
+    echo "Installing Nginx & PHP dependencies..."
     sudo apt-get update && sudo apt-get install -y nginx
     sudo apt-get update && sudo apt-get install -y php-fpm
-    sudo apt-get install -y php-json php-xml
-    echo "Nginx & php-fpm installed!"
+    sudo apt-get install -y php-json php-xml php-curl php-zip
+    sudo apt-get update && sudo apt-get install -y composer
+    echo "Nginx & PHP dependencies installed!"
+
+    ### install composer
 
     ### install mysql
     echo "Installing MySQL..."
