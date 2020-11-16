@@ -10,7 +10,8 @@ function main() {
   git clone git@github.com:"${repository_url}" /var/www/"${friendly_name}"
   cd /var/www/"${friendly_name}"
   composer install --prefer-dist --no-scripts
-  sudo chmod 777 storage && chmod 777 bootstrap/cache
+  sudo chown -R $USER:www-data storage
+  sudo chmod 775 storage && chmod 775 bootstrap/cache
   cp .env.example .env
   php artisan key:generate
 
@@ -20,7 +21,6 @@ function main() {
   sudo rm -rf /etc/nginx/sites-available/default && sudo rm -rf /etc/nginx/sites-enabled/default
   sudo ln -s /etc/nginx/sites-available/${server_name} /etc/nginx/sites-enabled/${server_name}
   sudo systemctl restart nginx
-
 
   sudo apt update && sudo apt install snapd
   sudo snap install --classic certbot
